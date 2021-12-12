@@ -4,7 +4,6 @@ using UnityEngine;
 
 public class FlyingSnake : Monster
 {
-	[SerializeField] private Animator animator;
 	protected int tweenID = -1;
 	protected override void Start()
 	{

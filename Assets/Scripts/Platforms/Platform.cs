@@ -22,7 +22,7 @@ public abstract class Platform : MonoBehaviour
         Player player = other.transform.parent.gameObject.GetComponent<Player>();
         if (player)
         {
-            if (player.rb.velocity.y < 0)
+            if (other.gameObject.tag == "FootCollider" && player.rb.velocity.y < 0)
             {
                 OnHit(player);
             }

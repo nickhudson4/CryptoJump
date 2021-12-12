@@ -27,6 +27,7 @@ public class CameraController : MonoBehaviour
     [HideInInspector] public float screenBoundBottom;
     [HideInInspector] public  float screenBoundTop;
 
+
     public void OnLevelStart()
     {
         camFollowTarget = gv.core.gameManager.playerManager.player.transform;
@@ -38,12 +39,6 @@ public class CameraController : MonoBehaviour
         Vector2 yBounds = Utils.GetScreenYBounds(0); 
         screenBoundBottom = yBounds.x;
         screenBoundTop = yBounds.y;
-
-        // Utils.PlaceDebugBlock(new Vector3(xBounds.x, 0, 0));
-        // Utils.PlaceDebugBlock(new Vector3(xBounds.y, 0, 0));
-        // Vector2 yBounds = Utils.GetScreenYBounds(0);
-        // Utils.PlaceDebugBlock(new Vector3(0, yBounds.x, 0));
-        // Utils.PlaceDebugBlock(new Vector3(0, yBounds.y, 0));
     }
 
     void Update()
@@ -99,6 +94,21 @@ public class CameraController : MonoBehaviour
             yield return 0;
         }
         transform.position = orignalPosition;
+    }
+
+    public void OnPause(bool pause)
+    {
+        // foreach (ParticleSystem ps in particles)
+        // {
+        //     if (pause)
+        //     {
+        //         ps.Pause(true);
+        //     }
+        //     else 
+        //     {
+        //         ps.Play(true);
+        //     }
+        // }
     }
 }
 

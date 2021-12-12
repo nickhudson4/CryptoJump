@@ -1,12 +1,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class Player : MonoBehaviour
 {
 	public Rigidbody2D rb;
 	public GameObject model;
 	[SerializeField] private float horizontalSpeed;
+	[SerializeField] private Animator animator;
 	private int tweenID = -1;
 
 	[Header("SHOOTING VARS")]
@@ -16,11 +18,7 @@ public class Player : MonoBehaviour
 	[SerializeField] private float shootCooldown;
 	private Counter shootCooldownCounter;
 
-	public float scale1;
-	public float time1;
-	public float scale2;
-	public float time2;
-	public float time3;
+	public bool isImmune = false;
 
 	void Start()
 	{
@@ -51,17 +49,13 @@ public class Player : MonoBehaviour
 	{
 		rb.velocity = Vector2.zero;
 		rb.AddForce(Vector2.up * force);
-
-		// LeanTween.rotateAround(model.gameObject, Vector3.forward, 360, 0.7f).setEase(LeanTweenType.easeOutCubic);
-		var seq = LeanTween.sequence();
-		seq.append(LeanTween.scaleY(model, scale1, time1));
-		seq.append(LeanTween.scaleY(model, scale2, time2));
-		seq.append(LeanTween.scaleY(model, 0.2f, time3));
+		animator.SetTrigger("jump2");
 	}
 
 	public void OnStartGameplay()
 	{
 		rb.isKinematic = false;
+		Jump(1200);
 	}
 
 	private void HandleInput()
@@ -70,12 +64,11 @@ public class Player : MonoBehaviour
 		{
 			float horiz = Input.GetAxis("Horizontal");
 			Vector3 newPos = transform.position + new Vector3 (horiz * Time.deltaTime * horizontalSpeed , 0, 0);
-			if (newPos.x > gv.core.cameraController.screenBoundLeft && newPos.x < gv.core.cameraController.screenBoundRight)
-			{ 
-				transform.position = newPos;
-			}
+			transform.position = newPos;
+			if (horiz > 0){ transform.eulerAngles = new Vector3(0, 180, 0); }
+			else if (horiz < 0) { transform.eulerAngles = new Vector3(0, 0, 0); }
 
-			if (Input.GetMouseButton(0))
+			if (Input.GetMouseButton(0) && !EventSystem.current.IsPointerOverGameObject())
 			{
 				if (shootCooldownCounter.isOver())
 				{

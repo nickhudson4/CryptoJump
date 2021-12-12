@@ -22,7 +22,15 @@ public abstract class Menu : MonoBehaviour
 
     public void OnClickNextLevel()
     {
-        gv.core.gameManager.RetryLevel();
+        gv.core.gameManager.GoToNextLevel();
+        Set(false);
+    }
+
+    public void OnClickRetry() //Note: This starts from the first level
+    {
+        gv.core.gameManager.LoadLevel(gv.core.gameManager.GetCurrentLevelNum());
+        gv.core.gameManager.lives = GameManager.TOTAL_LIVES;
+        gv.core.mainUI.healthUI.ResetHealth();
         Set(false);
     }
 

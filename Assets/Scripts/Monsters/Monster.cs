@@ -8,6 +8,7 @@ public class Monster : MonoBehaviour
     [SerializeField] private Collider2D col;
     [SerializeField] private ParticleSystem destroyParticles;
     [SerializeField] private AudioClip deathSound;
+    [SerializeField] private Animator animator;
     protected bool isDead = false;
     protected virtual void Start()
     {
@@ -24,11 +25,12 @@ public class Monster : MonoBehaviour
 
     private void OnTriggerEnter2D(Collider2D other) 
     {
+        if (isDead){ return; }
         Player player = other.transform.parent.GetComponent<Player>();
         Bullet bullet = other.transform.parent.GetComponent<Bullet>();
         if (player)
         {
-            OnHit(player);
+            OnHit(player, other.gameObject);
         }
         else if (bullet)
         {
@@ -36,29 +38,46 @@ public class Monster : MonoBehaviour
         }
     }
 
-    protected virtual void OnHit(Player player)
+    protected virtual void OnHit(Player player, GameObject hitObj)
     {
-        if (player.rb.velocity.y < 0)
+        Debug.Log("HIT: " + hitObj.name);
+        if (player.rb.velocity.y < 0 && hitObj.tag == "FootCollider")
         {
             OnDeath();
             player.Jump(1200);
         }
         else
         {
-            gv.core.gameManager.OnLevelLose();
+            if (!player.isImmune)
+            {
+                gv.core.gameManager.OnLevelLose();
+            }
+            else
+            {
+                OnDeath();
+            }
         }
     }
 
     protected virtual void OnDeath()
     {
         isDead = true;
-        Debug.Log("MOSTER DEATH");
-        // col.enabled = false;
-        // rb.isKinematic = false;
         destroyParticles.transform.parent = null;
         destroyParticles.Play();
         AudioSource.PlayClipAtPoint(deathSound, Camera.main.transform.position, 1f);
         Set(false);
+    }
+
+    public void OnPause(bool pause)
+    {
+        if (pause)
+        {
+            if (animator){ animator.speed = 0; }
+        }
+        else 
+        {
+            if (animator){ animator.speed = 1; }
+        }
     }
 
     protected void Set(bool set)

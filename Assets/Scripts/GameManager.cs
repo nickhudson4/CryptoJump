@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    public const int TOTAL_LIVES = 3; 
     public enum State
     {
         MENU,
         READY,
         GAMEPLAY,
-        GAMEPLAY_END //Ending animation before level over menu
+        GAMEPLAY_END, //Ending animation before level over menu
+        PAUSED,
     }
     public State state = State.GAMEPLAY;
 
@@ -23,7 +25,9 @@ public class GameManager : MonoBehaviour
     private Level currentLevel;
     public GameObject defaultHeroPrefab; //Only used is hero is not selected from start menu
     [HideInInspector] public int coinCount = 0;
+    [HideInInspector] public int coinsCollectedThisLevel= 0;
 
+    [HideInInspector] public int lives = TOTAL_LIVES;
 
     void Start()
     {
@@ -37,12 +41,12 @@ public class GameManager : MonoBehaviour
         if (num > levelPrefabs.Count){ num = 1; }
         if (currentLevel)
         { 
-            Destroy(currentLevel.gameObject); 
+            GetCurrentLevel().DestroyLevel();
         }
 
         currentLevel = Instantiate(levelPrefabs[num - 1], Vector3.zero, Quaternion.identity).GetComponent<Level>();
         currentLevelIndex = num - 1;
-
+        gv.core.mainUI.lvlText.text = "LEVEL " + Utils.IntToString(num);
         OnLevelStart();
     }
 
@@ -55,9 +59,7 @@ public class GameManager : MonoBehaviour
             {
                 state = State.GAMEPLAY;
                 playerManager.player.OnStartGameplay();
-                playerManager.player.Jump(1200);
-                gv.core.mainUI.timer.Set(true);
-                gv.core.mainUI.timer.StartTimer();
+                gv.core.mainUI.OnGameplayStart();
                 break;
             }
         }
@@ -65,7 +67,8 @@ public class GameManager : MonoBehaviour
 
     public void OnCollectCoin(Coin coin)
     {
-        coinCount+=10;
+        coinCount += coin.worth;
+        coinsCollectedThisLevel += coin.worth;
         gv.core.mainUI.coinCountUI.SetCount(coinCount);
     }
 
@@ -84,10 +87,27 @@ public class GameManager : MonoBehaviour
 
     public void OnLevelLose()
     {
+        lives--;
+        gv.core.mainUI.healthUI.SetHealth(lives);
+        if (lives <= 0)
+        {
+            OnGameOver();
+        }
+        else 
+        {
+            coinCount -= coinsCollectedThisLevel;
+            gv.core.mainUI.coinCountUI.SetCount(coinCount);
+            RetryLevel();
+        }
+    }
+
+    public void OnGameOver()
+    {
         gv.core.mainUI.OnGameOver();
-        // state = State.MENU;
-        // gv.core.RestartScene();
-        RetryLevel();
+        coinCount = 0;
+		gv.core.mainUI.coinCountUI.SetCount(coinCount);
+        playerManager.player.Set(false);
+        state = State.MENU;
     }
 
     public void GoToNextLevel()
@@ -107,11 +127,44 @@ public class GameManager : MonoBehaviour
         else { player = playerManager.SpawnPlayer(defaultHeroPrefab); }
         gv.core.cameraController.OnLevelStart();
         gv.core.mainUI.OnLevelStart();
+        coinsCollectedThisLevel = 0;
+        gv.core.mainUI.coinCountUI.SetCount(coinCount);
         state = State.READY;
+    }
+
+    public void Pause(bool pause)
+    {
+        if ((state == State.PAUSED && pause) || (state != State.PAUSED && !pause)){ return; }
+        if (pause)
+        {
+            state = State.PAUSED;
+            LeanTween.pauseAll();
+            Time.timeScale = 0;
+        }
+        else 
+        {
+            state = State.GAMEPLAY;
+            LeanTween.resumeAll();
+            Time.timeScale = 1;
+        }
+
+        GetCurrentLevel().OnPause(pause);
+        gv.core.mainUI.OnPause(pause);
+        gv.core.cameraController.OnPause(pause);
     }
 
     public Level GetCurrentLevel()
     {
         return currentLevel;
+    }
+
+    public int GetCurrentLevelNum()
+    {
+        return currentLevelIndex + 1;
+    }
+
+    public static State GetState()
+    {
+        return gv.core.gameManager.state;
     }
 }
